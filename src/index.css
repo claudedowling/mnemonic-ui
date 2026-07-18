@@ -1,0 +1,129 @@
+:root {
+  /* Ledger / card-catalog palette — warm archive paper, not cream */
+  --paper: #eae4d6;
+  --paper-raised: #f3eee2;
+  --ink: #2a2420;
+  --ink-dim: #6b6154;
+  --ink-faint: #8f8571;
+  --rule: #c9bfa9;
+  --rule-strong: #b3a88e;
+  --stamp: #a5362b;
+  --stamp-bg: rgba(165, 54, 43, 0.09);
+  --brass: #8c6d2f;
+  --brass-bg: rgba(140, 109, 47, 0.12);
+  --shadow: rgba(42, 36, 32, 0.14) 0 8px 20px -8px, rgba(42, 36, 32, 0.08) 0 2px 6px -2px;
+
+  --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  --serif: 'Lora', Georgia, 'Times New Roman', serif;
+
+  font: 16px/1.6 var(--serif);
+  color-scheme: light dark;
+  color: var(--ink);
+  background: var(--paper);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1b1815;
+    --paper-raised: #23201b;
+    --ink: #ede6d8;
+    --ink-dim: #a79c89;
+    --ink-faint: #776d5c;
+    --rule: #3a342c;
+    --rule-strong: #4a4235;
+    --stamp: #d6604c;
+    --stamp-bg: rgba(214, 96, 76, 0.14);
+    --brass: #c9a24e;
+    --brass-bg: rgba(201, 162, 78, 0.14);
+    --shadow: rgba(0, 0, 0, 0.5) 0 8px 20px -8px, rgba(0, 0, 0, 0.3) 0 2px 6px -2px;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--paper);
+}
+
+#root {
+  height: 100dvh;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--serif);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+p {
+  margin: 0 0 1em;
+}
+
+a {
+  color: var(--stamp);
+}
+
+button,
+input {
+  font-family: var(--serif);
+  color: var(--ink);
+}
+
+::selection {
+  background: var(--stamp-bg);
+}
+
+/* visible keyboard focus, everywhere */
+:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+code,
+pre {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+
+code {
+  padding: 0.1em 0.4em;
+}
+
+pre {
+  padding: 12px 14px;
+  overflow-x: auto;
+}
+
+pre code {
+  border: none;
+  padding: 0;
+  background: none;
+}
