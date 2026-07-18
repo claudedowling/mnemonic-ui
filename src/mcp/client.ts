@@ -49,8 +49,11 @@ async function rpcRequest(method: string, params?: unknown, expectResult = true)
   const contentType = res.headers.get('content-type') ?? ''
 
   // A redirect to an Access login page or an HTML interstitial shows up here
-  // as a non-JSON, non-event-stream response — that's the Access-expiry signal.
-  if (!contentType.includes('application/json') && !contentType.includes('text/event-stream')) {
+  // as an HTML response — that's the Access-expiry signal. Checked via a
+  // content-type denylist (not an allowlist) so legitimate non-JSON/non-SSE
+  // responses like the 202 text/plain ack for fire-and-forget notifications
+  // aren't mistaken for an expired session.
+  if (contentType.includes('text/html')) {
     throw new AccessExpiredError()
   }
 
