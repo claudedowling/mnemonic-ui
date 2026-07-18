@@ -9,7 +9,7 @@ tags:
   - ui
 lifecycle: temporary
 createdAt: '2026-07-18T00:06:45.410Z'
-updatedAt: '2026-07-18T02:08:39.325Z'
+updatedAt: '2026-07-18T02:11:03.611Z'
 role: research
 alwaysLoad: false
 project: https-github-com-claudedowling-mnemonic-ui
@@ -51,4 +51,4 @@ Rejected: direct filesystem/Obsidian editing (bypasses embedding refresh and git
 - **Session handshake:** `initialize` (POST) returns a session id via the `mcp-session-id` response header, with the result delivered as a single `text/event-stream`-formatted chunk on that same POST response (not a held-open stream).
 - **POST-only vs GET stream:** POST-only works. After sending `notifications/initialized` and passing `Mcp-Session-Id` on subsequent requests, `tools/list` succeeded via plain POST with no GET stream ever opened. The UI does not need to hold a persistent GET connection for basic read/write calls.
 - **GET behaviour:** a bare `GET /mcp` with `Accept: text/event-stream` blocks indefinitely (tested to 2 minutes without returning) — it opens a genuine long-lived stream, evidently for optional server-push notifications, not required for normal operation.
-- **Still open:** session lifetime under a long-lived browser tab. Not yet tested (needs a time-gapped retest of `tools/list` with the same session id). Plan: revisit if the deployed UI starts hitting unexpected 401s, or test explicitly before Phase 1 sign-off.
+- **Session lifetime — deferred, not blocking (2026-07-18):** controllable server-side via the Cloudflare Access application's session duration setting. Since the IdP is Google (not Google Workspace), effective session length may end up being a combination of the Access session duration *and* Google's own session/re-auth behavior, not just the Access setting alone. Revisit only if the deployed UI actually hits unexpected re-auth/401s — not a Phase 0 blocker.
