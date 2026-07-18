@@ -7,7 +7,7 @@ tags:
   - ui
 lifecycle: temporary
 createdAt: '2026-07-18T00:07:22.686Z'
-updatedAt: '2026-07-18T02:11:06.688Z'
+updatedAt: '2026-07-18T09:18:15.341Z'
 role: plan
 alwaysLoad: false
 project: https-github-com-claudedowling-mnemonic-ui
@@ -53,8 +53,23 @@ Design: consult \[\[frontend-design skill]] for distinctive, intentional visual 
 
 ## Validation gates
 
+**Phase 1 status (2026-07-18): DONE.** Read-only browsing (search, note list, note view) confirmed working end-to-end in a live browser at `notes.dowling.nz` against the mnemonic MCP origin. Final working configuration:
+
+- **Hostname split:** PWA at `notes.dowling.nz`, MCP origin traffic routed through `mnemonic-mcp.dowling.nz` (a new tunnel route to the same origin service), kept separate from `mnemonic.dowling.nz` (used by claude.ai's connector via the `mcp`-typed Access app, which enforces the MCP OAuth/Bearer flow and is incompatible with plain cookie-based browser fetch).
+- **Access application:** `mnemonic-mcp.dowling.nz` was merged in as an additional domain on the same (non-`mcp`-type) Access application as `notes.dowling.nz`, rather than kept as its own standalone app. This was necessary, not just simpler — a `type: mcp` Access app enforces the MCP Authorization spec (OAuth, Bearer tokens), which a plain browser client can't satisfy; the merged plain-type app uses ordinary cookie-session auth, and since both hostnames share one Access application, the `CF_Authorization` JWT minted for either hostname is valid for both.
+- **CORS Transform Rule** on `mnemonic-mcp.dowling.nz` (Rules → Transform Rules → Modify Response Header), unconditionally on `/mcp` responses, setting all four:
+  - `Access-Control-Allow-Origin: https://notes.dowling.nz`
+  - `Access-Control-Allow-Credentials: true`
+  - `Access-Control-Allow-Headers: content-type,mcp-session-id`
+  - `Access-Control-Expose-Headers: mcp-session-id`
+    (Needed because supergateway's own CORS handling doesn't set credentials or expose headers — see \[\[mnemonic-stdio-http-bridge-for-claude-ai-proven-supergateway-5ed9f7b1]].)
+- **Access application cookie settings:** `Same Site Attribute` set explicitly to `None` (not left blank) to guarantee the session cookie is sent on cross-origin requests from `notes.dowling.nz`.
+- **Client-side fix:** `src/mcp/client.ts`'s Access-expiry detection was a content-type allowlist that misfired on the legitimate `202 text/plain` response to the fire-and-forget `notifications/initialized` call. Fixed to a `text/html` denylist instead (see commit `4ef0d16`).
+
 - Phase 0 answers recorded before Phase 1 starts. **Status (2026-07-18): done.** Origin hostname confirmed (`mnemonic.dowling.nz`, same as Access app), POST-only handshake verified live (see \[\[research-mnemonic-ui-approach-decisions-and-constraints-from-492cbaf2]]), PWA hostname decided (`notes.dowling.nz`). Session lifetime deferred as non-blocking (controllable via Access session duration). **Proceeding to Phase 1.**
 
 - Phase 0 answers recorded before Phase 1 starts. **Status (2026-07-18): mostly done** — origin hostname confirmed (`mnemonic.dowling.nz`, same as Access app), POST-only handshake verified live (see \[\[research-mnemonic-ui-approach-decisions-and-constraints-from-492cbaf2]]), PWA hostname decided (`notes.dowling.nz`). Only remaining open item: session lifetime under a long-lived tab, untested.
+
 - Phase 1 done = browse/search/read working on both PC and Pixel through Access.
+
 - Phase 2 done = a full edit round-trip lands as a git commit in the vault with refreshed embedding, verified via a Claude session recalling the edited content.
