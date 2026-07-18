@@ -7,7 +7,7 @@ tags:
   - ui
 lifecycle: temporary
 createdAt: '2026-07-18T00:07:22.686Z'
-updatedAt: '2026-07-18T01:28:45.053Z'
+updatedAt: '2026-07-18T01:58:07.085Z'
 role: plan
 alwaysLoad: false
 project: https-github-com-claudedowling-mnemonic-ui
@@ -22,6 +22,8 @@ memoryVersion: 1
 Executable plan for v1 of the mnemonic web UI. Supersede or update this note if the plan changes materially.
 
 ## Phase 0 — Settle the transport questions (before code)
+
+**Decided (2026-07-18):** the mnemonic MCP origin (`mnemonic.dowling.nz`) is confirmed to be both the tunnel's published route and the Access application hostname on the same hostname — no separate `-origin` hostname exists (corrected in \[\[mnemonic-stdio-http-bridge-for-claude-ai-proven-supergateway-5ed9f7b1]]). Because of this, the PWA cannot share that hostname. **The PWA will be hosted at its own new Access application: `notes.dowling.nz`** (unused, verified free via DNS lookup), specifically so different WAF rules can be applied to it than to the MCP origin.
 
 1. Decide direct-to-origin vs via-portal. Working assumption: direct to the mnemonic origin hostname (e.g. `mnemonic-origin.dowling.nz`) — the portal's tool\_search indirection adds nothing for a purpose-built client. Requires the UI to be served from that same hostname or an Access-shared origin.
 2. Verify from the mnemonic/supergateway setup: session handshake (`initialize` → session id → `notifications/initialized`), whether POST-only works without a GET event stream, and session lifetime behaviour for a long-lived browser tab.
