@@ -7,7 +7,7 @@ tags:
   - ui
 lifecycle: temporary
 createdAt: '2026-07-18T00:07:22.686Z'
-updatedAt: '2026-07-18T02:08:29.248Z'
+updatedAt: '2026-07-18T02:11:06.688Z'
 role: plan
 alwaysLoad: false
 project: https-github-com-claudedowling-mnemonic-ui
@@ -52,6 +52,8 @@ Design: consult \[\[frontend-design skill]] for distinctive, intentional visual 
 - offline note cache
 
 ## Validation gates
+
+- Phase 0 answers recorded before Phase 1 starts. **Status (2026-07-18): done.** Origin hostname confirmed (`mnemonic.dowling.nz`, same as Access app), POST-only handshake verified live (see \[\[research-mnemonic-ui-approach-decisions-and-constraints-from-492cbaf2]]), PWA hostname decided (`notes.dowling.nz`). Session lifetime deferred as non-blocking (controllable via Access session duration). **Proceeding to Phase 1.**
 
 - Phase 0 answers recorded before Phase 1 starts. **Status (2026-07-18): mostly done** — origin hostname confirmed (`mnemonic.dowling.nz`, same as Access app), POST-only handshake verified live (see \[\[research-mnemonic-ui-approach-decisions-and-constraints-from-492cbaf2]]), PWA hostname decided (`notes.dowling.nz`). Only remaining open item: session lifetime under a long-lived tab, untested.
 - Phase 1 done = browse/search/read working on both PC and Pixel through Access.
