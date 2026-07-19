@@ -8,6 +8,15 @@ const PAT = process.env.MNEMONIC_TEST_PAT
 test.skip(!PAT, 'MNEMONIC_TEST_PAT not set — skipping private vault test')
 
 test('reads notes from a private vault repo with a PAT', async ({ page }) => {
+  page.on('response', (res) => {
+    if (res.url().includes('api.github.com') && !res.ok()) {
+      console.log('GITHUB API ERROR', res.status(), res.url())
+    }
+  })
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') console.log('BROWSER CONSOLE ERROR', msg.text())
+  })
+
   await page.addInitScript(
     ([pat]) => {
       window.localStorage.setItem(
