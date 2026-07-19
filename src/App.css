@@ -537,6 +537,54 @@
   color: var(--paper-raised);
 }
 
+.mcp-url-row {
+  display: flex;
+  gap: 8px;
+}
+
+.mcp-url-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.mcp-connect-button {
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0 12px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  color: var(--ink-dim);
+  background: none;
+  cursor: pointer;
+}
+
+.mcp-connect-button:hover:not(:disabled) {
+  border-color: var(--stamp);
+  color: var(--stamp);
+}
+
+.mcp-connect-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.mcp-status {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  margin: -8px 0 16px;
+}
+
+.mcp-status-ok {
+  color: var(--stamp);
+}
+
+.mcp-status-error {
+  color: var(--ink-dim);
+}
+
 /* ---------- repo picker ---------- */
 
 .repo-picker {

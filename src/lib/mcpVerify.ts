@@ -1,4 +1,27 @@
-import { callTool, configureMcp } from '../mcp/client'
+import { AccessExpiredError, callTool, configureMcp } from '../mcp/client'
+
+export interface McpConnectionResult {
+  ok: boolean
+  message: string
+}
+
+// A lightweight, side-effect-free call (limit: 1) used purely to prove the
+// server is reachable and authenticated before relying on it elsewhere.
+export async function pingMcp(url: string): Promise<McpConnectionResult> {
+  try {
+    configureMcp(url)
+    await callTool('recent_memories', { limit: 1 })
+    return { ok: true, message: 'Connected' }
+  } catch (e) {
+    if (e instanceof AccessExpiredError) {
+      return {
+        ok: false,
+        message: 'Not authenticated — open the server URL in a new tab to log in, then try again.',
+      }
+    }
+    return { ok: false, message: e instanceof Error ? e.message : 'Connection failed' }
+  }
+}
 
 interface DetectProjectResult {
   projectId?: string

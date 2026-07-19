@@ -21,6 +21,7 @@ interface MultiProps {
   // selected repo, letting MCP semantic search resolve project identity for
   // that repo instead of only searching the global vault.
   mcpUrl?: string
+  mcpConnected?: boolean
   paths?: Record<string, string>
   onPathsChange?: (paths: Record<string, string>) => void
 }
@@ -173,7 +174,8 @@ export function RepoPicker(props: Props) {
         {loading && repos.length === 0 && <li className="repo-picker-loading">Loading repos…</li>}
         {visible.map((repo) => {
           const status = vaultStatus.get(repo.fullName)
-          const showPathField = props.mode === 'multi' && mcpUrl && isSelected(repo.fullName)
+          const showPathField =
+            props.mode === 'multi' && props.mcpConnected && mcpUrl && isSelected(repo.fullName)
           const pStatus = pathStatus.get(repo.fullName)
           return (
             <li key={repo.fullName} className="repo-picker-row">
