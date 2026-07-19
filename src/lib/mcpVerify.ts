@@ -23,11 +23,11 @@ export async function pingMcp(url: string): Promise<McpConnectionResult> {
   }
 }
 
+// Actual shape confirmed live, e.g.:
+// { action: "project_identity_detected", project: { id, name, source, remoteName }, defaultProject: {...} }
 interface DetectProjectResult {
-  projectId?: string
-  projectName?: string
-  name?: string
-  id?: string
+  project?: { id?: string; name?: string }
+  defaultProject?: { id?: string; name?: string }
 }
 
 export interface ProjectPathCheck {
@@ -41,7 +41,7 @@ export interface ProjectPathCheck {
 export async function checkProjectPath(mcpUrl: string, cwd: string, repoFullName: string): Promise<ProjectPathCheck> {
   configureMcp(mcpUrl)
   const result = await callTool<DetectProjectResult>('detect_project', { cwd })
-  const detected = result.projectName ?? result.name ?? result.projectId ?? result.id ?? ''
+  const detected = result.project?.name ?? result.project?.id ?? ''
   const repoName = repoFullName.split('/').pop() ?? repoFullName
   const ok = detected.trim().length > 0 && detected.toLowerCase().includes(repoName.toLowerCase())
   return { ok, label: detected || 'no project detected' }
