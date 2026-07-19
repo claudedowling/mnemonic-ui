@@ -28,9 +28,13 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          set -e
+          set +e
           OUTPUT=$(npx wrangler versions upload --message "${GITHUB_SHA}" 2>&1)
+          STATUS=$?
           echo "$OUTPUT"
+          if [ $STATUS -ne 0 ]; then
+            exit $STATUS
+          fi
           URL=$(echo "$OUTPUT" | grep -Eo 'https://[^ ]*workers\.dev' | tail -1)
           VERSION_ID=$(echo "$OUTPUT" | grep -Eo 'Version ID:[[:space:]]*[0-9a-f-]+' | grep -Eo '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
           echo "url=$URL" >> "$GITHUB_OUTPUT"
