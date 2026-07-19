@@ -22,10 +22,10 @@ test('reads notes from a private vault repo with a PAT', async ({ page }) => {
       window.localStorage.setItem(
         'mnemonic-ui:settings',
         JSON.stringify({
-          connectionMode: 'github',
           githubPat: pat,
           githubVaultRepo: 'claudedowling/mnemonic-vault',
           githubProjectRepos: [],
+          projectRepoPaths: {},
           mcpUrl: '',
         }),
       )

@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchAccessibleRepos, repoHasVault, type RepoSummary } from '../lib/githubApi'
+import { checkProjectPath, type ProjectPathCheck } from '../lib/mcpVerify'
 
 const PAGE_SIZE = 20
 
 type VaultStatus = 'checking' | boolean
+type PathStatus = 'checking' | ProjectPathCheck | 'error'
 
 interface SingleProps {
   mode: 'single'
@@ -15,6 +17,12 @@ interface MultiProps {
   mode: 'multi'
   value: string[]
   onChange: (value: string[]) => void
+  // Only meaningful in multi mode: an optional local filesystem path per
+  // selected repo, letting MCP semantic search resolve project identity for
+  // that repo instead of only searching the global vault.
+  mcpUrl?: string
+  paths?: Record<string, string>
+  onPathsChange?: (paths: Record<string, string>) => void
 }
 
 type Props = (SingleProps | MultiProps) & { pat: string }
@@ -85,6 +93,30 @@ export function RepoPicker(props: Props) {
   const checkingInitialBatch =
     loading || visible.some((r) => vaultStatus.get(r.fullName) === 'checking')
 
+  const mcpUrl = props.mode === 'multi' ? (props.mcpUrl ?? '').trim() : ''
+  const paths = props.mode === 'multi' ? (props.paths ?? {}) : {}
+  const [pathStatus, setPathStatus] = useState<Map<string, PathStatus>>(new Map())
+
+  function verifyPath(repoFullName: string, cwd: string) {
+    if (!mcpUrl || !cwd.trim()) {
+      setPathStatus((m) => {
+        const next = new Map(m)
+        next.delete(repoFullName)
+        return next
+      })
+      return
+    }
+    setPathStatus((m) => new Map(m).set(repoFullName, 'checking'))
+    checkProjectPath(mcpUrl, cwd.trim(), repoFullName)
+      .then((result) => setPathStatus((m) => new Map(m).set(repoFullName, result)))
+      .catch(() => setPathStatus((m) => new Map(m).set(repoFullName, 'error')))
+  }
+
+  function setPath(repoFullName: string, cwd: string) {
+    if (props.mode !== 'multi' || !props.onPathsChange) return
+    props.onPathsChange({ ...paths, [repoFullName]: cwd })
+  }
+
   if (!pat.trim()) {
     // No PAT yet — fall back to manual entry so public-repo/no-token usage still works.
     return (
@@ -141,6 +173,8 @@ export function RepoPicker(props: Props) {
         {loading && repos.length === 0 && <li className="repo-picker-loading">Loading repos…</li>}
         {visible.map((repo) => {
           const status = vaultStatus.get(repo.fullName)
+          const showPathField = props.mode === 'multi' && mcpUrl && isSelected(repo.fullName)
+          const pStatus = pathStatus.get(repo.fullName)
           return (
             <li key={repo.fullName} className="repo-picker-row">
               <label>
@@ -155,7 +189,31 @@ export function RepoPicker(props: Props) {
                 {!repo.isOwner && <span className="repo-picker-badge repo-picker-badge-collab">collaborator</span>}
                 {status === 'checking' && <span className="repo-picker-badge repo-picker-badge-checking">…</span>}
                 {status === true && <span className="repo-picker-badge repo-picker-badge-vault">.mnemonic</span>}
+                {pStatus && pStatus !== 'checking' && pStatus !== 'error' && (
+                  <span
+                    className={
+                      pStatus.ok
+                        ? 'repo-picker-badge repo-picker-badge-mcp-ok'
+                        : 'repo-picker-badge repo-picker-badge-mcp-bad'
+                    }
+                    title={pStatus.label}
+                  >
+                    {pStatus.ok ? 'MCP ✓' : 'MCP ✗'}
+                  </span>
+                )}
+                {pStatus === 'checking' && <span className="repo-picker-badge repo-picker-badge-checking">MCP…</span>}
               </label>
+              {showPathField && (
+                <div className="repo-picker-path">
+                  <input
+                    className="repo-picker-path-input"
+                    value={paths[repo.fullName] ?? ''}
+                    onChange={(e) => setPath(repo.fullName, e.target.value)}
+                    onBlur={(e) => verifyPath(repo.fullName, e.target.value)}
+                    placeholder="Local path on MCP server (optional, e.g. /home/you/repos/name)"
+                  />
+                </div>
+              )}
             </li>
           )
         })}

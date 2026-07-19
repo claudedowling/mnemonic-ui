@@ -628,6 +628,33 @@
   background: var(--brass-bg);
 }
 
+.repo-picker-badge-mcp-ok {
+  color: var(--stamp);
+  border: 1px solid var(--stamp);
+  background: var(--stamp-bg);
+}
+
+.repo-picker-badge-mcp-bad {
+  color: var(--ink-faint);
+  border: 1px solid var(--rule-strong);
+}
+
+.repo-picker-path {
+  padding: 0 9px 8px 32px;
+}
+
+.repo-picker-path-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-dim);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 5px 7px;
+}
+
 .repo-picker-more {
   align-self: flex-start;
   font-family: var(--mono);

@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AccessExpiredError, getMcpOrigin } from './mcp/client'
-import { createMcpSource } from './lib/mcpSource'
-import { createGithubSource } from './lib/githubSource'
-import type { NoteDetail, NoteSummary, VaultSource } from './lib/vaultSource'
+import { createSource } from './lib/compositeSource'
+import type { NoteDetail, NoteSummary } from './lib/vaultSource'
 import { isConfigured, loadSettings, saveSettings, type Settings } from './lib/settings'
 import { SearchBox } from './components/SearchBox'
 import { NoteList } from './components/NoteList'
@@ -10,14 +9,6 @@ import { NoteView } from './components/NoteView'
 import { TagFilter } from './components/TagFilter'
 import { SettingsPanel } from './components/SettingsPanel'
 import './App.css'
-
-function createSource(settings: Settings): VaultSource {
-  if (settings.connectionMode === 'mcp') return createMcpSource(settings.mcpUrl)
-  return createGithubSource({
-    pat: settings.githubPat,
-    repos: [settings.githubVaultRepo, ...settings.githubProjectRepos].filter(Boolean),
-  })
-}
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(() => loadSettings())

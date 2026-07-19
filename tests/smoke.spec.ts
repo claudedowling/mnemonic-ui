@@ -6,10 +6,10 @@ import { test, expect } from '@playwright/test'
 // exhausted quickly; falls back to unauthenticated for local dev, since
 // mnemonic-ui's own vault notes are public either way.
 const SETTINGS = {
-  connectionMode: 'github',
   githubPat: process.env.MNEMONIC_TEST_PAT ?? '',
   githubVaultRepo: 'claudedowling/mnemonic-ui',
   githubProjectRepos: [],
+  projectRepoPaths: {},
   mcpUrl: '',
 }
 
