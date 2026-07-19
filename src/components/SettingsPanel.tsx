@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Settings } from '../lib/settings'
+import { RepoPicker } from './RepoPicker'
 
 interface Props {
   settings: Settings
@@ -58,27 +59,21 @@ export function SettingsPanel({ settings, onSave, onClose, canCancel }: Props) {
               with read-only Contents access, scoped to the repos below if your vault is private.
             </p>
             <label className="settings-field">
-              Global vault repo (owner/repo)
-              <input
+              Global vault repo
+              <RepoPicker
+                mode="single"
+                pat={draft.githubPat}
                 value={draft.githubVaultRepo}
-                onChange={(e) => update('githubVaultRepo', e.target.value)}
-                placeholder="you/mnemonic-vault"
+                onChange={(v) => update('githubVaultRepo', v)}
               />
             </label>
             <label className="settings-field">
-              Project repos (comma-separated owner/repo)
-              <input
-                value={draft.githubProjectRepos.join(', ')}
-                onChange={(e) =>
-                  update(
-                    'githubProjectRepos',
-                    e.target.value
-                      .split(',')
-                      .map((s) => s.trim())
-                      .filter(Boolean),
-                  )
-                }
-                placeholder="you/project-a, you/project-b"
+              Project repos
+              <RepoPicker
+                mode="multi"
+                pat={draft.githubPat}
+                value={draft.githubProjectRepos}
+                onChange={(v) => update('githubProjectRepos', v)}
               />
             </label>
           </>

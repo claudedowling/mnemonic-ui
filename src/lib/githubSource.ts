@@ -1,4 +1,5 @@
 import { load as loadYaml } from 'js-yaml'
+import { githubJson } from './githubApi'
 import type { NoteDetail, NoteSummary, VaultSource } from './vaultSource'
 
 const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/
@@ -19,21 +20,6 @@ interface GithubContentItem {
   name: string
   path: string
   type: string
-}
-
-function authHeaders(pat: string): Record<string, string> {
-  const headers: Record<string, string> = { Accept: 'application/vnd.github+json' }
-  if (pat) headers.Authorization = `token ${pat}`
-  return headers
-}
-
-async function githubJson<T>(url: string, pat: string): Promise<T | null> {
-  const res = await fetch(url, { headers: authHeaders(pat) })
-  if (res.status === 404) return null
-  if (!res.ok) {
-    throw new Error(`GitHub API error (${res.status}) for ${url}`)
-  }
-  return (await res.json()) as T
 }
 
 function decodeBase64Utf8(b64: string): string {

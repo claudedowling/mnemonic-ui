@@ -57,6 +57,7 @@ jobs:
       - name: Run Playwright tests against preview version
         env:
           BASE_URL: ${{ needs.preview.outputs.url }}
+          MNEMONIC_TEST_PAT: ${{ secrets.GH_PAT }}
         run: npx playwright test
 
   promote-production:
