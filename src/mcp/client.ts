@@ -3,7 +3,20 @@
 // session id arrives via the `mcp-session-id` response header, no GET stream
 // needs to be held open for normal read/write calls.
 
-const MCP_URL = import.meta.env.VITE_MCP_URL ?? '/mcp'
+// Runtime-configurable (via Settings), not a build-time env var, so anyone
+// deploying their own copy of this app configures it in-app rather than
+// needing their own build.
+let mcpUrl = import.meta.env.VITE_MCP_URL ?? '/mcp'
+
+export function configureMcp(url: string) {
+  mcpUrl = url
+  sessionId = null
+  initPromise = null
+}
+
+export function getMcpOrigin(): string {
+  return new URL(mcpUrl, window.location.href).origin
+}
 
 export class AccessExpiredError extends Error {
   constructor() {
@@ -36,7 +49,7 @@ async function rpcRequest(method: string, params?: unknown, expectResult = true)
   if (params !== undefined) body.params = params
   if (expectResult) body.id = ++requestId
 
-  const res = await fetch(MCP_URL, {
+  const res = await fetch(mcpUrl, {
     method: 'POST',
     credentials: 'include',
     headers,

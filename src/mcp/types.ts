@@ -18,6 +18,7 @@ export interface NoteDetail {
   vault?: string
   createdAt?: string
   updatedAt?: string
+  relatedTo?: { id: string; type?: string }[]
 }
 
 export interface RecallResult {

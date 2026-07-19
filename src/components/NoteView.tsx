@@ -6,9 +6,10 @@ import type { NoteDetail } from '../mcp/types'
 interface Props {
   note: NoteDetail | null
   loading: boolean
+  onSelectRelated: (id: string) => void
 }
 
-export function NoteView({ note, loading }: Props) {
+export function NoteView({ note, loading, onSelectRelated }: Props) {
   const html = useMemo(() => {
     if (!note) return ''
     const raw = marked.parse(note.content, { async: false })
@@ -37,6 +38,21 @@ export function NoteView({ note, loading }: Props) {
         </div>
       )}
       <div className="note-content" dangerouslySetInnerHTML={{ __html: html }} />
+      {note.relatedTo && note.relatedTo.length > 0 && (
+        <div className="related-notes">
+          <span className="related-notes-label">Related</span>
+          {note.relatedTo.map((rel) => (
+            <button
+              key={rel.id}
+              type="button"
+              className="related-note-pill"
+              onClick={() => onSelectRelated(rel.id)}
+            >
+              {rel.id}
+            </button>
+          ))}
+        </div>
+      )}
     </article>
   )
 }
