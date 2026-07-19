@@ -1,17 +1,24 @@
 import { test, expect } from '@playwright/test'
 
-// Seeds settings directly into localStorage so the test doesn't depend on a
-// GitHub PAT secret — the public claudedowling/mnemonic-ui repo's own vault
-// notes are readable unauthenticated.
+// Seeds settings directly into localStorage. Uses MNEMONIC_TEST_PAT when
+// available (CI) to stay off GitHub's 60 req/hr unauthenticated rate limit,
+// which is shared across the whole GitHub Actions runner IP pool and gets
+// exhausted quickly; falls back to unauthenticated for local dev, since
+// mnemonic-ui's own vault notes are public either way.
 const SETTINGS = {
   connectionMode: 'github',
-  githubPat: '',
+  githubPat: process.env.MNEMONIC_TEST_PAT ?? '',
   githubVaultRepo: 'claudedowling/mnemonic-ui',
   githubProjectRepos: [],
   mcpUrl: '',
 }
 
 test.beforeEach(async ({ page }) => {
+  page.on('response', (res) => {
+    if (res.url().includes('api.github.com') && !res.ok()) {
+      console.log('GITHUB API ERROR', res.status(), res.url())
+    }
+  })
   await page.addInitScript((settings) => {
     window.localStorage.setItem('mnemonic-ui:settings', JSON.stringify(settings))
   }, SETTINGS)
