@@ -7,9 +7,10 @@ interface Props {
   note: NoteDetail | null
   loading: boolean
   onSelectRelated: (id: string) => void
+  onTagClick: (tag: string, additive: boolean) => void
 }
 
-export function NoteView({ note, loading, onSelectRelated }: Props) {
+export function NoteView({ note, loading, onSelectRelated, onTagClick }: Props) {
   const html = useMemo(() => {
     if (!note) return ''
     const raw = marked.parse(note.content, { async: false })
@@ -31,9 +32,15 @@ export function NoteView({ note, loading, onSelectRelated }: Props) {
       {note.tags && note.tags.length > 0 && (
         <div className="note-tags-row">
           {note.tags.map((tag) => (
-            <span key={tag} className="note-tag-pill">
+            <button
+              key={tag}
+              type="button"
+              className="note-tag-pill"
+              title="Filter by this tag (shift-click to add to current filters)"
+              onClick={(e) => onTagClick(tag, e.shiftKey)}
+            >
               {tag}
-            </span>
+            </button>
           ))}
         </div>
       )}

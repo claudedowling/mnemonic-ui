@@ -37,6 +37,7 @@ test('lists notes and opens one', async ({ page }) => {
 
 test('filters by tag', async ({ page }) => {
   await page.goto('/')
+  await page.locator('.tag-filter-toggle').click()
   const tagPill = page.locator('.tag-filter-pill').first()
   await expect(tagPill).toBeVisible()
   await tagPill.click()

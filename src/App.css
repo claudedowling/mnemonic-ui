@@ -76,17 +76,16 @@
 
 .note-list-item {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   width: 100%;
   text-align: left;
-  padding: 10px 16px 10px 13px;
+  padding: 10px 16px 10px 10px;
   border: none;
   border-bottom: 1px solid var(--rule);
   border-left: 3px solid transparent;
   background: none;
   cursor: pointer;
-  gap: 3px;
+  gap: 8px;
   transition: background-color 0.12s ease, border-left-color 0.12s ease;
 }
 
@@ -97,6 +96,21 @@
 .note-list-item.selected {
   background: var(--paper-raised);
   border-left-color: var(--stamp);
+}
+
+.note-project-bar {
+  flex-shrink: 0;
+  width: 3px;
+  border-radius: 2px;
+  opacity: 0.55;
+}
+
+.note-list-item-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
 }
 
 .note-date {
@@ -199,6 +213,12 @@
   border: 1px solid var(--brass);
   color: var(--brass);
   background: var(--brass-bg);
+  cursor: pointer;
+}
+
+.note-tag-pill:hover {
+  background: var(--brass);
+  color: var(--paper-raised);
 }
 
 /* the signature: a rotated ink stamp marking the note's lifecycle */
@@ -375,14 +395,94 @@
   border-color: var(--rule-strong);
 }
 
-/* ---------- tag filter ---------- */
+/* ---------- semantic search badge ---------- */
 
-.tag-filter {
+.semantic-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  border-radius: 999px;
+  border: 1px solid var(--stamp);
+  color: var(--stamp);
+  background: var(--stamp-bg);
+  text-transform: none;
+}
+
+/* ---------- project filter ---------- */
+
+.project-filter {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
   padding: 10px 16px;
   border-bottom: 1px solid var(--rule);
+}
+
+.project-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  padding: 2px 9px 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--rule-strong);
+  color: var(--ink-dim);
+  background: none;
+  cursor: pointer;
+}
+
+.project-filter-pill.active {
+  background: var(--paper-raised);
+  border-color: var(--ink-dim);
+  color: var(--ink);
+}
+
+.project-filter-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+/* ---------- tag filter ---------- */
+
+.tag-filter-accordion {
+  border-bottom: 1px solid var(--rule);
+}
+
+.tag-filter-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.tag-filter-toggle:hover {
+  color: var(--ink);
+}
+
+.tag-filter-caret {
+  font-size: 10px;
+}
+
+.tag-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0 16px 10px;
 }
 
 .tag-filter-pill {
@@ -488,6 +588,22 @@
   font-size: 12px;
   color: var(--ink-dim);
   margin-bottom: 14px;
+}
+
+.settings-field-label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.settings-mcp-tag {
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--stamp);
+  color: var(--stamp);
+  background: var(--stamp-bg);
 }
 
 .settings-field input {

@@ -3,10 +3,12 @@ import { AccessExpiredError, getMcpOrigin } from './mcp/client'
 import { createSource } from './lib/compositeSource'
 import type { NoteDetail, NoteSummary } from './lib/vaultSource'
 import { isConfigured, loadSettings, saveSettings, type Settings } from './lib/settings'
+import { labelForProject } from './lib/projectColor'
 import { SearchBox } from './components/SearchBox'
 import { NoteList } from './components/NoteList'
 import { NoteView } from './components/NoteView'
 import { TagFilter } from './components/TagFilter'
+import { ProjectFilter } from './components/ProjectFilter'
 import { SettingsPanel } from './components/SettingsPanel'
 import './App.css'
 
@@ -23,7 +25,8 @@ export default function App() {
   const [loadingNote, setLoadingNote] = useState(false)
   const [accessExpired, setAccessExpired] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [activeTag, setActiveTag] = useState<string | null>(null)
+  const [activeTags, setActiveTags] = useState<string[]>([])
+  const [activeProject, setActiveProject] = useState<string | null>(null)
 
   const withErrorHandling = useCallback(async <T,>(fn: () => Promise<T>): Promise<T | undefined> => {
     try {
@@ -50,7 +53,8 @@ export default function App() {
   }, [source, withErrorHandling])
 
   useEffect(() => {
-    setActiveTag(null)
+    setActiveTags([])
+    setActiveProject(null)
     loadRecent()
   }, [loadRecent])
 
@@ -75,6 +79,19 @@ export default function App() {
       .finally(() => setLoadingNote(false))
   }
 
+  function handleTagToggle(tag: string) {
+    setActiveTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
+  }
+
+  function handleTagClickFromNote(tag: string, additive: boolean) {
+    setActiveTags((prev) => {
+      if (additive) {
+        return prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+      }
+      return prev.length === 1 && prev[0] === tag ? [] : [tag]
+    })
+  }
+
   const allTags = useMemo(() => {
     const tagSet = new Set<string>()
     for (const note of notes) {
@@ -83,9 +100,22 @@ export default function App() {
     return [...tagSet].sort()
   }, [notes])
 
+  const projectOptions = useMemo(() => {
+    const vaults = new Set<string>()
+    for (const note of notes) {
+      if (note.vault) vaults.add(note.vault)
+    }
+    return [...vaults]
+      .map((vault) => ({ value: vault, label: labelForProject(vault, settings.githubVaultRepo) }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [notes, settings.githubVaultRepo])
+
   const visibleNotes = useMemo(
-    () => (activeTag ? notes.filter((n) => n.tags?.includes(activeTag)) : notes),
-    [notes, activeTag],
+    () =>
+      notes
+        .filter((n) => activeTags.every((tag) => n.tags?.includes(tag)))
+        .filter((n) => !activeProject || n.vault === activeProject),
+    [notes, activeTags, activeProject],
   )
 
   function handleSaveSettings(next: Settings) {
@@ -135,13 +165,17 @@ export default function App() {
       <aside className="sidebar">
         <div className="brand">
           <p className="brand-mark">Mnemonic</p>
-          <p className="brand-sub">memory vault</p>
+          <p className="brand-sub">
+            memory vault
+            {source.supportsSemanticSearch && <span className="semantic-badge">semantic search</span>}
+          </p>
           <button type="button" className="settings-gear" onClick={() => setShowSettings(true)}>
             Settings
           </button>
         </div>
         <SearchBox onSearch={handleSearch} onClear={loadRecent} />
-        <TagFilter tags={allTags} activeTag={activeTag} onSelect={setActiveTag} />
+        <ProjectFilter projects={projectOptions} activeProject={activeProject} onSelect={setActiveProject} />
+        <TagFilter tags={allTags} activeTags={activeTags} onToggle={handleTagToggle} />
         {loadingList ? (
           <p className="note-list-empty">Loading…</p>
         ) : (
@@ -153,7 +187,12 @@ export default function App() {
         <button type="button" className="back-button" onClick={() => setSelectedId(null)}>
           ← Drawer
         </button>
-        <NoteView note={selectedNote} loading={loadingNote} onSelectRelated={handleSelect} />
+        <NoteView
+          note={selectedNote}
+          loading={loadingNote}
+          onSelectRelated={handleSelect}
+          onTagClick={handleTagClickFromNote}
+        />
       </main>
     </div>
   )

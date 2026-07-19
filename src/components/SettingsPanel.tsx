@@ -55,9 +55,13 @@ export function SettingsPanel({ settings, onSave, onClose, canCancel }: Props) {
         </p>
 
         <label className="settings-field">
-          Global vault repo
+          <span className="settings-field-label-row">
+            Global vault repo
+            {mcpState === 'ok' && <span className="settings-mcp-tag">mcp</span>}
+          </span>
           <RepoPicker
             mode="single"
+            expectedKind="global"
             pat={draft.githubPat}
             value={draft.githubVaultRepo}
             onChange={(v) => update('githubVaultRepo', v)}
@@ -68,6 +72,7 @@ export function SettingsPanel({ settings, onSave, onClose, canCancel }: Props) {
           Project repos
           <RepoPicker
             mode="multi"
+            expectedKind="project"
             pat={draft.githubPat}
             value={draft.githubProjectRepos}
             onChange={(v) => update('githubProjectRepos', v)}

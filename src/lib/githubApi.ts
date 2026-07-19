@@ -60,6 +60,11 @@ export async function findNotesDir(pat: string, repo: string): Promise<string | 
   return null
 }
 
-export async function repoHasVault(pat: string, repo: string): Promise<boolean> {
-  return (await findNotesDir(pat, repo)) !== null
+export type VaultKind = 'project' | 'global' | 'none'
+
+export async function repoVaultKind(pat: string, repo: string): Promise<VaultKind> {
+  const dir = await findNotesDir(pat, repo)
+  if (dir === '.mnemonic/notes') return 'project'
+  if (dir === 'notes') return 'global'
+  return 'none'
 }

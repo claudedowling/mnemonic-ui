@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchAccessibleRepos, repoHasVault, type RepoSummary } from '../lib/githubApi'
+import { fetchAccessibleRepos, repoVaultKind, type RepoSummary, type VaultKind } from '../lib/githubApi'
 import { checkProjectPath, type ProjectPathCheck } from '../lib/mcpVerify'
 
 const PAGE_SIZE = 20
+const SCAN_CONCURRENCY = 5
 
-type VaultStatus = 'checking' | boolean
 type PathStatus = 'checking' | ProjectPathCheck | 'error'
 
 interface SingleProps {
@@ -26,16 +26,21 @@ interface MultiProps {
   onPathsChange?: (paths: Record<string, string>) => void
 }
 
-type Props = (SingleProps | MultiProps) & { pat: string }
+// Which vault layout this list is looking for — a standalone global vault
+// repo stores notes at `notes/` in its root, a project's own repo stores
+// them at `.mnemonic/notes/`. Each picker only shows repos of its own kind.
+type Props = (SingleProps | MultiProps) & { pat: string; expectedKind: 'global' | 'project' }
 
 export function RepoPicker(props: Props) {
-  const { pat } = props
+  const { pat, expectedKind } = props
   const [repos, setRepos] = useState<RepoSummary[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState('')
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
-  const [vaultStatus, setVaultStatus] = useState<Map<string, VaultStatus>>(new Map())
+  const [kindCache, setKindCache] = useState<Map<string, VaultKind>>(new Map())
+  const [scanCursor, setScanCursor] = useState(0)
+  const [scanning, setScanning] = useState(false)
 
   useEffect(() => {
     const trimmed = pat.trim()
@@ -72,27 +77,78 @@ export function RepoPicker(props: Props) {
     return repos.filter((r) => r.fullName.toLowerCase().includes(q))
   }, [repos, filter])
 
-  const visible = filtered.slice(0, visibleCount)
+  useEffect(() => {
+    setScanCursor(0)
+  }, [filter, repos])
 
+  const matches = useMemo(
+    () => filtered.slice(0, scanCursor).filter((r) => kindCache.get(r.fullName) === expectedKind),
+    [filtered, scanCursor, kindCache, expectedKind],
+  )
+
+  // Scans repos in order, checking each one's vault kind, until enough
+  // matches of the expected kind are found (or the list runs out). Continues
+  // from where it left off when visibleCount grows ("Load more").
   useEffect(() => {
     const trimmed = pat.trim()
-    if (!trimmed) return
-    for (const repo of visible) {
-      if (vaultStatus.has(repo.fullName)) continue
-      setVaultStatus((m) => new Map(m).set(repo.fullName, 'checking'))
-      repoHasVault(trimmed, repo.fullName)
-        .then((has) => {
-          setVaultStatus((m) => new Map(m).set(repo.fullName, has))
+    if (!trimmed || filtered.length === 0) return
+    let cancelled = false
+    async function scan() {
+      setScanning(true)
+      let idx = scanCursor
+      let found = matches.length
+      while (found < visibleCount && idx < filtered.length && !cancelled) {
+        const batch = filtered.slice(idx, idx + SCAN_CONCURRENCY)
+        const results = await Promise.all(
+          batch.map(async (repo) => ({ repo, kind: await repoVaultKind(trimmed, repo.fullName) })),
+        )
+        if (cancelled) return
+        setKindCache((m) => {
+          const next = new Map(m)
+          for (const { repo, kind } of results) next.set(repo.fullName, kind)
+          return next
         })
-        .catch(() => {
-          setVaultStatus((m) => new Map(m).set(repo.fullName, false))
-        })
+        found += results.filter((r) => r.kind === expectedKind).length
+        idx += batch.length
+      }
+      if (!cancelled) {
+        setScanCursor(idx)
+        setScanning(false)
+      }
+    }
+    scan()
+    return () => {
+      cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible.map((r) => r.fullName).join(','), pat])
+  }, [filtered, visibleCount, pat, expectedKind])
 
-  const checkingInitialBatch =
-    loading || visible.some((r) => vaultStatus.get(r.fullName) === 'checking')
+  function isSelected(fullName: string): boolean {
+    return props.mode === 'single' ? props.value === fullName : props.value.includes(fullName)
+  }
+
+  // Already-selected repos stay visible even before the scan reaches them —
+  // otherwise a saved selection would appear to vanish while re-scanning.
+  const visible = useMemo(() => {
+    const seen = new Set<string>()
+    const ordered: RepoSummary[] = []
+    for (const repo of filtered) {
+      if (isSelected(repo.fullName) && !seen.has(repo.fullName)) {
+        seen.add(repo.fullName)
+        ordered.push(repo)
+      }
+    }
+    for (const repo of matches.slice(0, visibleCount)) {
+      if (!seen.has(repo.fullName)) {
+        seen.add(repo.fullName)
+        ordered.push(repo)
+      }
+    }
+    return ordered
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered, matches, visibleCount])
+
+  const hasMore = matches.length > visibleCount || scanCursor < filtered.length
 
   const mcpUrl = props.mode === 'multi' ? (props.mcpUrl ?? '').trim() : ''
   const paths = props.mode === 'multi' ? (props.paths ?? {}) : {}
@@ -153,10 +209,6 @@ export function RepoPicker(props: Props) {
     }
   }
 
-  function isSelected(fullName: string): boolean {
-    return props.mode === 'single' ? props.value === fullName : props.value.includes(fullName)
-  }
-
   return (
     <div className="repo-picker">
       <input
@@ -166,16 +218,19 @@ export function RepoPicker(props: Props) {
           setFilter(e.target.value)
           setVisibleCount(PAGE_SIZE)
         }}
-        placeholder="Filter repos…"
+        placeholder={`Filter ${expectedKind} repos…`}
         disabled={loading}
       />
       {error && <p className="repo-picker-error">{error}</p>}
       <ul className="repo-picker-list">
         {loading && repos.length === 0 && <li className="repo-picker-loading">Loading repos…</li>}
+        {!loading && repos.length > 0 && visible.length === 0 && (
+          <li className="repo-picker-loading">
+            {scanning ? `Scanning for a ${expectedKind} vault…` : `No ${expectedKind} vault found.`}
+          </li>
+        )}
         {visible.map((repo) => {
-          const status = vaultStatus.get(repo.fullName)
-          const showPathField =
-            props.mode === 'multi' && props.mcpConnected && mcpUrl && isSelected(repo.fullName)
+          const showPathField = props.mode === 'multi' && props.mcpConnected && mcpUrl && isSelected(repo.fullName)
           const pStatus = pathStatus.get(repo.fullName)
           return (
             <li key={repo.fullName} className="repo-picker-row">
@@ -185,12 +240,9 @@ export function RepoPicker(props: Props) {
                   name={props.mode === 'single' ? 'repo-picker-single' : undefined}
                   checked={isSelected(repo.fullName)}
                   onChange={() => toggle(repo.fullName)}
-                  disabled={checkingInitialBatch}
                 />
                 <span className="repo-picker-name">{repo.fullName}</span>
                 {!repo.isOwner && <span className="repo-picker-badge repo-picker-badge-collab">collaborator</span>}
-                {status === 'checking' && <span className="repo-picker-badge repo-picker-badge-checking">…</span>}
-                {status === true && <span className="repo-picker-badge repo-picker-badge-vault">.mnemonic</span>}
                 {pStatus && pStatus !== 'checking' && pStatus !== 'error' && (
                   <span
                     className={
@@ -220,14 +272,14 @@ export function RepoPicker(props: Props) {
           )
         })}
       </ul>
-      {visible.length < filtered.length && (
+      {hasMore && (
         <button
           type="button"
           className="repo-picker-more"
           onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-          disabled={loading}
+          disabled={loading || scanning}
         >
-          Load more
+          {scanning ? 'Scanning…' : 'Load more'}
         </button>
       )}
     </div>
