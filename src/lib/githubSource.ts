@@ -1,5 +1,5 @@
 import { load as loadYaml } from 'js-yaml'
-import { githubJson } from './githubApi'
+import { findNotesDir, githubJson } from './githubApi'
 import type { NoteDetail, NoteSummary, VaultSource } from './vaultSource'
 
 const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/
@@ -58,8 +58,10 @@ export function createGithubSource({ pat, repos }: GithubSourceOptions): VaultSo
   async function loadAllNotes(): Promise<{ id: string; repo: string; data: Record<string, unknown> }[]> {
     const all: { id: string; repo: string; data: Record<string, unknown> }[] = []
     for (const repo of repos) {
+      const notesDir = await findNotesDir(pat, repo)
+      if (!notesDir) continue
       const items = await githubJson<GithubContentItem[]>(
-        `https://api.github.com/repos/${repo}/contents/.mnemonic/notes`,
+        `https://api.github.com/repos/${repo}/contents/${notesDir}`,
         pat,
       )
       for (const item of items ?? []) {

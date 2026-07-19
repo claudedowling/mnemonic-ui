@@ -47,7 +47,19 @@ export async function fetchAccessibleRepos(pat: string): Promise<RepoSummary[]> 
   return all
 }
 
+// A project's own repo stores its vault under `.mnemonic/notes/`; a
+// standalone global vault repo (as created by `mnemonic init`) stores it at
+// `notes/` in the repo root instead. Both are checked, in that order.
+export const NOTE_DIR_CANDIDATES = ['.mnemonic/notes', 'notes']
+
+export async function findNotesDir(pat: string, repo: string): Promise<string | null> {
+  for (const dir of NOTE_DIR_CANDIDATES) {
+    const data = await githubJson(`https://api.github.com/repos/${repo}/contents/${dir}`, pat)
+    if (data !== null) return dir
+  }
+  return null
+}
+
 export async function repoHasVault(pat: string, repo: string): Promise<boolean> {
-  const data = await githubJson(`https://api.github.com/repos/${repo}/contents/.mnemonic/notes`, pat)
-  return data !== null
+  return (await findNotesDir(pat, repo)) !== null
 }
