@@ -24,10 +24,15 @@ export function createSource(settings: Settings): VaultSource {
     ...github,
     supportsSemanticSearch: true,
     async search(query, limit) {
-      const calls = [callTool<RecallResult>('recall', { query, limit }), ...cwds.map((cwd) =>
-        callTool<RecallResult>('recall', { query, limit, cwd }),
-      )]
-      const settled = await Promise.all(calls)
+      // Sequenced, not concurrent: a --stateful MCP bridge spawns one
+      // subprocess per session, and this client reuses a single shared
+      // session for every recall call — firing them concurrently against
+      // that one session/subprocess corrupts the responses.
+      const settled: RecallResult[] = []
+      settled.push(await callTool<RecallResult>('recall', { query, limit }))
+      for (const cwd of cwds) {
+        settled.push(await callTool<RecallResult>('recall', { query, limit, cwd }))
+      }
 
       const byId = new Map<string, NoteSummary>()
       for (const result of settled) {
